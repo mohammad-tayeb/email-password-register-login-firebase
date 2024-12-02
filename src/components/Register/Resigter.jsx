@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import auth from "../../Firebase/firebase.config";
 import { useState } from "react";
 import { FaRegEye } from "react-icons/fa";
@@ -17,15 +17,20 @@ const Resigter = () => {
         const name = e.target.name.value
         const email = e.target.email.value
         const password = e.target.password.value
-        console.log(name, email, password)
+        const terms = e.target.terms.checked
+        console.log(name, email, password,terms)
 
-        if (password.length < 6) {
+        if (password.length < 6) {  //password msut contain a 6 values
             setRegisterError('Invalid Password: Password too weak')
             return  //if return is used the code will not continue after
         }
-        else if (!/[A-z]/.test(password)) {
+        else if (!/[A-z]/.test(password)) { //the password must contain a capital letter
             setRegisterError('Password Must Include A UpperCase')
             return   //msut use Return
+        }
+        else if(!terms){   // must check the checkbox
+            setRegisterError('Accept Our Terms & Conditions')
+            return // msut return
         }
 
         setRegisterError('')
@@ -34,6 +39,20 @@ const Resigter = () => {
             .then(result => {
                 console.log(result.user)
                 setRegisterSuccess('Registration Succesfull')
+
+                updateProfile(result.user,{
+                    displayName: name, photoURL:""
+                })
+                .then(()=>console.log('Profile Updated'))
+                .catch(error=>{
+                    console.log(error)
+                })
+
+                // send varification email
+                sendEmailVerification(result.user)
+                .then(()=>{
+                    alert('varification email sent')
+                })
             })
             .catch(error => {
                 console.log(error)
@@ -44,7 +63,7 @@ const Resigter = () => {
 
     return (
         <div className="">
-            <div className="flex items-center justify-center h-full bg-gray-100">
+            <div className="flex items-center justify-center h-full bg-white">
                 <div className="w-full max-w-md p-6 bg-white rounded shadow-md">
                     <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
                         Register
@@ -103,15 +122,15 @@ const Resigter = () => {
 
                         {/* Confirm Password Input */}
                         <div className="mb-4 relative">
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                            <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
                                 Password
                             </label>
                             <div className="relative">
                                 <input
                                     required
-                                    name="password"
+                                    name="confirm-password"
                                     type={showPass ? "text" : "password"}
-                                    id="password"
+                                    id="confirm-password"
                                     className="w-full px-4 py-2 border rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
                                     placeholder="Enter your password"
                                 />
@@ -123,12 +142,17 @@ const Resigter = () => {
                                 </span>
                             </div>
                         </div>
+                        {/* checkbox */}
+                        <div className="flex flex-row items-center justify-start">
+                            <input type="checkbox" name="terms"/>
+                            <label className="ms-1 mb-1" htmlFor="terms"> I Agree To Terms & Conditions</label>
+                        </div>
 
                         {/* Submit Button */}
                         <div>
                             <button
                                 type="submit"
-                                className="w-full px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                className="mt-2 w-full px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                                 Register
                             </button>
